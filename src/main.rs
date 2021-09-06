@@ -11,8 +11,7 @@ use std::path::Path;
 use pest::iterators::{Pair, Pairs};
 
 use vtable::VTable;
-use vtable::Dimention;
-use parse::{define_unite, parse_from_file, Rule};
+use parse::{parse_from_file, Rule};
 use error::Error;
 
 
@@ -24,12 +23,13 @@ fn main() {
     let ast = match parse_from_file(input_path, &mut buffer) {
         Err(err) => match err {
             Error::Io(err) => panic!("{:?}", err),
-            Error::Pest(err) => panic!("{:?}", err)
+            Error::Pest(err) => panic!("{:?}", err),
+            _ => panic!()
         }
         Ok(pair) => pair
     };
 
     let mut vtable = VTable::default();
 
-    define_unite(ast.clone(), &mut vtable);
+    // define_unite(ast.clone(), &mut vtable);
 }
