@@ -11,6 +11,7 @@ use std::path::Path;
 use pest::iterators::{Pair, Pairs};
 
 use vtable::VTable;
+use vtable::Dimention;
 use parse::{define_unite, parse_from_file, Rule};
 use error::Error;
 
