@@ -1,0 +1,22 @@
+Pair { 
+    rule: expr,
+    span: Span { str: "import \"../mesunivers/best\"", start: 2, end: 29 },
+    inner: [
+        Pair { 
+            rule: importExpr,
+            span: Span { str: "import \"../mesunivers/best\"", start: 2, end: 29 },
+            inner: [
+                Pair { 
+                    rule: keyword_import,
+                    span: Span { str: "import", start: 2, end: 8 },
+                    inner: []
+                },
+                Pair { 
+                    rule: string,
+                    span: Span { str: "\"../mesunivers/best\"", start: 9, end: 29 },
+                    inner: [] 
+                }
+            ]
+        }
+    ]
+}

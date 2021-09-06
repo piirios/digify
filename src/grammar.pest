@@ -1,0 +1,78 @@
+
+WHITESPACE = _{ " " }
+COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+
+operator = { div | mul }
+div = { "/" }
+mul = { "*" | "." }
+number = @{  "-"? ~ ASCII_DIGIT+ }
+string = { "\"" ~ (!"\"" ~ ANY)* ~ "\""}
+ident = { (ASCII_ALPHA | "_")+ } // MATH_SYMBOL
+neg = { "!" }
+dimention = {
+    keyword_simplify? ~ dimention_ident ~ (operator ~ dimention_ident)*
+}
+dimention_ident = ${ (ident | dimention_groupe) ~ number? }
+dimention_groupe = !{ "(" ~ dimention ~ ")" }
+
+keyword_import = @{ "import" ~ !(ASCII_ALPHA) }
+keyword_define = @{ "define" ~ !(ASCII_ALPHA) }
+keyword_assert = @{ "assert" ~ !(ASCII_ALPHA) }
+keyword_print = @{ "print" ~ !(ASCII_ALPHA) }
+keyword_let = @{ "let" ~ !(ASCII_ALPHA) }
+keyword_simplify = @{ "simplify" ~ !(ASCII_ALPHA) }
+
+program = _{
+    SOI ~ NEWLINE* ~ (stmt | NEWLINE | COMMENT)* ~ NEWLINE? ~ EOI
+}
+
+stmt = _{ expr ~ ";" | compilerStmt }
+
+compilerStmt = {
+    orderDeclare ~ (
+        simpleOrder | multipleOrder
+    )
+}
+orderDeclare = ${ "#" ~ neg? }
+
+simpleOrderName = {
+    "print"
+}
+multipleOrderName = {
+    "print_summary"
+    | "print_assert"
+}
+
+simpleOrder = { simpleOrderName }
+multipleOrder = {
+    "[" ~ (multipleOrderName ~ ("," ~ multipleOrderName)*)? ~ "]"
+}
+
+expr = {
+    importExpr
+    | defineExpr
+    | letExpr
+    | printExpr
+    | assertExpr
+}
+
+importExpr = {
+    keyword_import ~ string
+}
+
+defineExpr = {
+    keyword_define ~ ident ~ "(" ~ string ~ ")"
+}
+
+letExpr = {
+    keyword_let ~ ident ~ "=" ~ dimention
+}
+
+printExpr = {
+    keyword_print ~ ((flag? ~ dimention ~ ("," ~ dimention)*) | string) 
+}
+flag = ${ "'" ~ ("f" | "u" | "s") }
+
+assertExpr = {
+    keyword_assert ~ neg? ~ dimention ~ "," ~ dimention ~ ("," ~ dimention)*
+}
