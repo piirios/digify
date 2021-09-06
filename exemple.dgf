@@ -1,0 +1,37 @@
+
+import "../mesunivers/best";
+
+#[print_summary, print_assert]
+
+
+#!print 
+define X("m");
+define D ("o");
+
+// commentaire LOLO
+#!print
+// section Electricity {
+    let fin = D * L;
+    let err = fin2 * D-4;
+// }
+
+let ez = simplify fin;
+
+assert ez, fin, (err * D4)-1;
+
+assert! ez, err;
+
+
+define kkk("k");
+
+print fin * k;
+print simplify fin;
+print 's fin;
+
+print "------------";
+
+print 'f ez, fin;
+
+print 'u fin;
+
+// print 's Electricity
