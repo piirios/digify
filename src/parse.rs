@@ -8,6 +8,16 @@ use pest::{Parser, iterators::Pairs};
 
 use crate::{error::Error, vtable::{Dimention, Name, VTable}};
 
+pub type Instructions = Vec<Instruction>;
+
+pub enum Instruction {
+    Define(String, String),
+    Import(String),
+    Let(String, String),
+    Assert(Vec<String>),
+    Print(Option<char>, Vec<String>) // flag then ident or  expr
+}
+
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
 struct DigifyParse;
