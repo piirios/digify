@@ -7,15 +7,20 @@ use std::path::Path;
 use pest::{Parser, iterators::Pairs};
 
 use crate::{error::Error, vtable::{Dimention, Name, VTable}};
+pub type Instructions<'s> = Vec<Instruction<'s>>;
 
-pub type Instructions = Vec<Instruction>;
+pub enum Instruction<'s> {
+    Define(&'s str, &'s str),
+    Import(&'s str),
+    Let(&'s str, DimentionStr<'s>),
+    Assert(Vec<&'s str>),
+    Print(Option<char>, Vec<&'s str>), // flag then ident or  expr
+}
 
-pub enum Instruction {
-    Define(String, String),
-    Import(String),
-    Let(String, String),
-    Assert(Vec<String>),
-    Print(Option<char>, Vec<String>) // flag then ident or  expr
+pub enum DimentionStr<'s> {
+    Unite(&'s str),
+    Power(&'s DimentionStr<'s>, i32),
+    Composit(&'s DimentionStr<'s>, Operator, &'s DimentionStr<'s>),
 }
 
 #[derive(Parser)]
