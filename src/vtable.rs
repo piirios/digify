@@ -1,5 +1,6 @@
 
 use std::collections::HashMap;
+use std::boxed::Box;
 use crate::error::{Digirror, Error};
 
 pub struct VTable<'di> {
@@ -42,39 +43,24 @@ impl Name {
 
 pub enum Dimention<'di> {
     Unite(String),
-    Power(&'di Dimention<'di>, u32),
+    Power(&'di Dimention<'di>,Sign, u32),
     Composit(&'di Dimention<'di>, Operator, &'di Dimention<'di>),
-    Flatten( Vec<&'di Dimention<'di>>)
 
 }
 
-pub impl<'a> Dimention<'a>{
-    fn flatten(&'a self, register: &VTable, sign: &Sign) -> Self{
-        match self{
-            Self::Composit(&dim1, &op, &dim2) => {
-                match op {
-                    Operator::Mul => {
-                        Self::Flatten(
-                            vec![dim1.flatten(&register, &sign), dim1.flatten(&register, &sign)]
-                        )
-                    },
-                    Operator::Div => {
-                        Self::Flatten(
-                            vec![dim1.flatten(&register, &sign), dim2.flatten(&register, &sign.flip())]
-                        )
-                    }
-                }
-            },
-            Self::Power(&dim, pow) => { Self::Power(&dim, sign.resolve(pow))},
-            Self::Flatten(&content) => {content}
-            Self::Unite(name) => Self::Unite(name)
-       }
-    }
-    fn check(&'a self, other: &'a Dimention) -> bool {
-        let me = match self{
-            Self::Flatten(content) => content,
-            
+struct RawDimension<'di>{
+    flattened: Vec<Dimention<'di>>,
+    tree: Dimention<'di>
+}
+impl<'a> RawDimension<'a>{
+    fn combine(dim1: RawDimension<'a>, op: Operator, dim2: RawDimension<'a>) -> RawDimension<'a>{
+        let flattened = vec![dim1.flattened, dim2.flattened].into_iter().flatten().collect::<Vec<Dimention<'a>>>();
+        let tree = Dimention::Composit(&dim1.tree, op, &dim2.tree);
+        RawDimension{
+            flattened: flattened,
+            tree:tree
         }
+
     }
 }
 
