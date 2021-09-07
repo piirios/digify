@@ -48,7 +48,56 @@ pub enum Dimention<'di> {
 
 }
 
+pub impl<'a> Dimention<'a>{
+    fn flatten(&'a self, register: &VTable, sign: &Sign) -> Self{
+        match self{
+            Self::Composit(&dim1, &op, &dim2) => {
+                match op {
+                    Operator::Mul => {
+                        Self::Flatten(
+                            vec![dim1.flatten(&register, &sign), dim1.flatten(&register, &sign)]
+                        )
+                    },
+                    Operator::Div => {
+                        Self::Flatten(
+                            vec![dim1.flatten(&register, &sign), dim2.flatten(&register, &sign.flip())]
+                        )
+                    }
+                }
+            },
+            Self::Power(&dim, pow) => { Self::Power(&dim, sign.resolve(pow))},
+            Self::Flatten(&content) => {content}
+            Self::Unite(name) => Self::Unite(name)
+       }
+    }
+    fn check(&'a self, other: &'a Dimention) -> bool {
+        let me = match self{
+            Self::Flatten(content) => content,
+            
+        }
+    }
+}
+
 pub enum Operator {
     Mul,
     Div
+}
+
+enum Sign {
+    Plus,
+    Minus
+}
+impl Sign {
+    const fn flip(&self) -> Self{
+        match Self {
+            Self::Plus => Self::Minus,
+            Self::Minus => Self::Plus
+        }
+    }
+    const fn resolve(&self, power:i32) -> i32 {
+        match Self {
+            Self::Plus => power,
+            Self::Minus => -power
+        }
+    }
 }
