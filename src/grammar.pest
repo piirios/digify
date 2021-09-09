@@ -30,7 +30,7 @@ stmt = _{ expr ~ ";" | compilerStmt }
 
 compilerStmt = {
     orderDeclare ~ (
-        simpleOrder | multipleOrder
+        simpleOrder ~ NEWLINE* ~ expr ~ ";" | multipleOrder
     )
 }
 orderDeclare = ${ "#" ~ neg? }

@@ -49,6 +49,7 @@ struct Dimension<'di> {
     tree: RawDimension<'di>,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum Operator {
     Mul,
     Div,

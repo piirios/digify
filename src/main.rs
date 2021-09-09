@@ -10,8 +10,10 @@ use std::path::Path;
 use pest::iterators::{Pair, Pairs};
 
 use error::Error;
-use parse::{parse_from_file, Rule};
+use parse::{Rule, into_intructions, parse_from_file};
 use vtable::VTable;
+
+
 
 fn main() {
     let arg = std::env::args()
@@ -31,5 +33,7 @@ fn main() {
 
     let mut vtable = VTable::default();
 
-    // define_unite(ast.clone(), &mut vtable);
+    let i = into_intructions(ast);
+
+    println!("{:#?}", i);
 }
