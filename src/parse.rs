@@ -1,12 +1,13 @@
-
-
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use pest::{Parser, iterators::Pairs};
+use pest::{iterators::Pairs, Parser};
 
-use crate::{error::Error, vtable::{Dimention, Name, VTable}};
+use crate::{
+    error::Error,
+    vtable::{Dimention, Name, VTable},
+};
 pub type Instructions<'s> = Vec<Instruction<'s>>;
 
 pub enum Instruction<'s> {
@@ -27,8 +28,10 @@ pub enum DimentionStr<'s> {
 #[grammar = "grammar.pest"]
 struct DigifyParse;
 
-pub fn parse_from_file<'a>(input_path: &Path, buffer: &'a mut String) -> Result<Pairs<'a, Rule>, Error<Rule>> {
-    
+pub fn parse_from_file<'a>(
+    input_path: &Path,
+    buffer: &'a mut String,
+) -> Result<Pairs<'a, Rule>, Error<Rule>> {
     let mut input_file = File::open(input_path)?;
 
     input_file.read_to_string(buffer)?;
