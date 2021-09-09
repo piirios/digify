@@ -1,8 +1,8 @@
 use std::boxed::Box;
+use std::cmp::Ordering;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use std::cmp::Ordering;
 
 use either::Either;
 use itertools::Itertools;
@@ -11,8 +11,8 @@ use pest::{
     Parser,
 };
 
+use crate::dimension::Operator;
 use crate::error::Error;
-use crate::vtable::Operator;
 use crate::utils::RemoveQuotes;
 
 pub type Instructions<'s> = Vec<Instruction<'s>>;
@@ -39,24 +39,24 @@ impl<'s> PartialEq for Instruction<'s> {
         match self {
             Self::Define(_, _) => match other {
                 Self::Define(_, _) => true,
-                _ => false
-            }
+                _ => false,
+            },
             Self::Import(_) => match other {
                 Self::Import(_) => true,
-                _ => false
-            }
+                _ => false,
+            },
             Self::Let(_, _) => match other {
                 Self::Let(_, _) => true,
-                _ => false
-            }
+                _ => false,
+            },
             Self::Assert(_, _) => match other {
                 Self::Assert(_, _) => true,
-                _ => false
-            }
+                _ => false,
+            },
             Self::Print(_) => match other {
                 Self::Print(_) => true,
-                _ => false
-            }
+                _ => false,
+            },
         }
     }
 }
@@ -66,12 +66,12 @@ impl<'s> PartialOrd for Instruction<'s> {
         Some(match self {
             Self::Define(_, _) => match other {
                 Self::Define(_, _) => Ordering::Equal,
-                _ => Ordering::Less
-            }
+                _ => Ordering::Less,
+            },
             _ => match other {
                 Self::Define(_, _) => Ordering::Greater,
-                _ => Ordering::Equal
-            }
+                _ => Ordering::Equal,
+            },
         })
     }
 }

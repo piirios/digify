@@ -10,7 +10,7 @@ mod vtable;
 use std::path::Path;
 
 use error::Error;
-use parse::{parse_from_file, into_intructions_sorted};
+use parse::{into_intructions_sorted, parse_from_file};
 use vtable::VTable;
 
 fn main() {

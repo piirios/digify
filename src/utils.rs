@@ -1,4 +1,3 @@
-
 pub trait RemoveQuotes {
     fn remove_quotes(&mut self) -> Self;
 }
