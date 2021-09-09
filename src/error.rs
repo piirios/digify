@@ -5,7 +5,7 @@ use crate::vtable::Name;
 pub enum Error<E> {
     Pest(pest::error::Error<E>),
     Io(std::io::Error),
-    Digify(Digirror)
+    Digify(Digirror),
 }
 
 impl<E> From<std::io::Error> for Error<E> {
@@ -31,5 +31,5 @@ impl<E> From<Digirror> for Error<E> {
 
 #[derive(Debug)]
 pub enum Digirror {
-    NameAlreadyExist(Name)
+    NameAlreadyExist(Name),
 }
