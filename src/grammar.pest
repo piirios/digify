@@ -9,11 +9,11 @@ number = @{  "-"? ~ ASCII_DIGIT+ }
 string = { "\"" ~ (!"\"" ~ ANY)* ~ "\""}
 ident = { (ASCII_ALPHA | "_")+ } // MATH_SYMBOL
 neg = { "!" }
-dimention = {
-    keyword_simplify? ~ dimention_ident ~ (operator ~ dimention_ident)*
+dimension = {
+    keyword_simplify? ~ dimension_ident ~ (operator ~ dimension_ident)*
 }
-dimention_ident = ${ (ident | dimention_groupe) ~ number? }
-dimention_groupe = !{ "(" ~ dimention ~ ")" }
+dimension_ident = ${ (ident | dimension_groupe) ~ number? }
+dimension_groupe = !{ "(" ~ dimension ~ ")" }
 
 keyword_import = @{ "import" ~ !(ASCII_ALPHA) }
 keyword_define = @{ "define" ~ !(ASCII_ALPHA) }
@@ -65,14 +65,14 @@ defineExpr = {
 }
 
 letExpr = {
-    keyword_let ~ ident ~ "=" ~ dimention
+    keyword_let ~ ident ~ "=" ~ dimension
 }
 
 printExpr = {
-    keyword_print ~ ((flag? ~ dimention ~ ("," ~ dimention)*) | string) 
+    keyword_print ~ ((flag? ~ dimension ~ ("," ~ dimension)*) | string) 
 }
 flag = ${ "'" ~ ("f" | "u" | "s") }
 
 assertExpr = {
-    keyword_assert ~ neg? ~ dimention ~ "," ~ dimention ~ ("," ~ dimention)*
+    keyword_assert ~ neg? ~ dimension ~ "," ~ dimension ~ ("," ~ dimension)*
 }

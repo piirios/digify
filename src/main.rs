@@ -4,16 +4,13 @@ extern crate pest_derive;
 mod error;
 mod parse;
 mod vtable;
+mod utils;
 
 use std::path::Path;
 
-use pest::iterators::{Pair, Pairs};
-
 use error::Error;
-use parse::{Rule, into_intructions, parse_from_file};
+use parse::{parse_from_file, into_intructions_sorted};
 use vtable::VTable;
-
-
 
 fn main() {
     let arg = std::env::args()
@@ -33,7 +30,7 @@ fn main() {
 
     let mut vtable = VTable::default();
 
-    let i = into_intructions(ast);
+    let i = into_intructions_sorted(ast);
 
     println!("{:#?}", i);
 }

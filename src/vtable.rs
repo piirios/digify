@@ -8,10 +8,10 @@ pub struct VTable<'di> {
 
 impl<'di> VTable<'di> {
     #[inline]
-    pub fn push<E>(&mut self, name: Name, dimention: RawDimension<'di>) -> Result<(), Error<E>> {
+    pub fn push<E>(&mut self, name: Name, dimension: RawDimension<'di>) -> Result<(), Error<E>> {
         // TODO: return error if name already existing
         if !self.table.contains_key(&name) {
-            self.table.insert(name, dimention);
+            self.table.insert(name, dimension);
             Ok(())
         } else {
             Err(Digirror::NameAlreadyExist(name).into())
