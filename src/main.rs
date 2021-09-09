@@ -1,10 +1,11 @@
 #[macro_use]
 extern crate pest_derive;
 
+mod dimension;
 mod error;
 mod parse;
-mod vtable;
 mod utils;
+mod vtable;
 
 use std::path::Path;
 
