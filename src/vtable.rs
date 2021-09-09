@@ -100,7 +100,7 @@ impl<'a> RawDimension<'a> {
         match self {
             Self::Unite(name) => {
                 vec![Self::Power(
-                    &RawDimension::Unite(name.to_string()),
+                    self,
                     Sign::Plus,
                     sign.resolve(power),
                 )]
