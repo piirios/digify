@@ -19,6 +19,13 @@ impl<'di, D> Power<'di, D> {
             power,
         }
     }
+
+    pub fn as_i32(&self) -> i32 {
+        match self.sign {
+            Sign::Plus => self.power as i32,
+            Sign::Minus => -(self.power as i32),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -38,7 +45,14 @@ impl<T> Concated<T> {
     fn get_mut(&mut self) -> &mut T {
         match self {
             Self::Concated(t) => t,
-            Self::Spreaded(t) => t
+            Self::Spreaded(t) => t,
+        }
+    }
+
+    fn get_ref(&self) -> &T {
+        match self {
+            Self::Concated(t) => t,
+            Self::Spreaded(t) => t,
         }
     }
 
@@ -83,7 +97,39 @@ impl<'di> Flatten<'di> {
     }
 
     fn concate(&mut self) {
-        unimplemented!()
+        let mut hmap = HashMap::new();
+
+        for power_container in self.vec.get_ref() {
+            let power = hmap.entry(power_container.dimention).or_insert(0);
+            *power += power_container.as_i32()
+        }
+
+        let mut vec = hmap
+            .drain()
+            .map(|string_power| string_power.into())
+            .collect::<Vec<Power<'di, Unite>>>();
+
+        vec.sort_unstable_by_key(|power| power.dimention);
+
+        self.vec = Concat::Concated(vec);
+    }
+
+    fn hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.vec.get_ref().hash(&mut hasher);
+        hasher.finish()
+    }
+}
+
+impl<'s> From<(&'s String, i32)> for Power<'s, Unite> {
+    fn from((string, power): (&'s String, i32)) -> Self {
+        let sign = if power.is_negative() {
+            Sign::Minus
+        } else {
+            Sign::Plus
+        };
+
+        Self::new(string, sign, power.abs() as u32)
     }
 }
 
