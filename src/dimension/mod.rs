@@ -6,7 +6,7 @@ pub type Unite = String;
 
 pub enum RawDimension<'di> {
     Unite(Unite),
-    Power(Power<'di>),
+    Power(Power<'di, RawDimension<'di>>),
     Composit(&'di RawDimension<'di>, Operator, &'di RawDimension<'di>),
 }
 
@@ -62,9 +62,9 @@ impl<'di> RawDimension<'di> {
     // see crate::dimension::power::Flatten::concate
     fn flatten_recursive(&'di self, sign: Sign, power: u32) -> Flatten<'di> {
         match self {
-            Self::Unite(_) => Flatten::one(Power::new(self, Sign::Plus, power)),
+            Self::Unite(unite) => Flatten::one(Power::new(unite, Sign::Plus, power)),
             Self::Power(power_) => power_
-                .raw_dimention
+                .dimention
                 .flatten_recursive(power_.sign.multiply(sign), power * power_.power),
             Self::Composit(dim1, op, dim2) => match op {
                 Operator::Mul => {

@@ -5,16 +5,16 @@ use super::RawDimension;
 use super::Sign;
 
 
-pub struct Power<'di> {
-    pub raw_dimention: &'di RawDimension<'di>,
+pub struct Power<'di, D> {
+    pub dimention: &'di D,
     pub sign: Sign,
     pub power: u32,
 }
 
-impl<'di> Power<'di> {
-    pub fn new(raw_dimention: &'di RawDimension<'di>, sign: Sign, power: u32) -> Self {
+impl<'di, D> Power<'di, D> {
+    pub fn new(dimention: &'di D, sign: Sign, power: u32) -> Self {
         Self {
-            raw_dimention,
+            dimention,
             sign,
             power,
         }
@@ -63,12 +63,12 @@ impl<T> Concated<T> {
 }
 
 pub struct Flatten<'di> {
-    vec: Concated<Vec<Power<'di>>>,
+    vec: Concat<Vec<Power<'di, Unite>>>,
 }
 
 impl<'di> Flatten<'di> {
     #[inline]
-    pub fn one(power: Power<'di>) -> Self {
+    pub fn one(power: Power<'di, Unite>) -> Self {
         Self {
             vec: Concated::Spreaded(vec![power]),
         }
