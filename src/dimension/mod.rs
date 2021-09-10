@@ -59,7 +59,7 @@ impl From<RawDimension> for Dimension {
         Dimension {
             raw_dimension: dim,
             flattened,
-            hash
+            hash,
         }
     }
 }

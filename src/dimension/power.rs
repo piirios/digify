@@ -188,7 +188,7 @@ mod tests {
                 Power::new(Rc::new("T".to_owned()), Sign::Minus, 2),
             ]),
         };
-        
+
         let flatten2 = Flatten {
             vec: Concat::Concated(vec![
                 Power::new(Rc::new("M".to_owned()), Sign::Plus, 1),
@@ -198,8 +198,8 @@ mod tests {
         };
 
         assert_eq!(flatten1.hash(), flatten2.hash())
-    }    
-    
+    }
+
     #[test]
     fn hash_equals_flatten_after_concat() {
         let masse = Rc::new("M".to_owned());

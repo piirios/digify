@@ -23,7 +23,7 @@ pub enum Instruction<'s> {
     Import(&'s str),
     Let(&'s str, DimensionStr<'s>),
     Assert(bool, Vec<DimensionStr<'s>>),
-    Print(Either<(Option<char>, Vec<DimensionStr<'s>>), &'s str>), // flag then ident or expr
+    Print(Either<(Option<char>, Vec<DimensionStr<'s>>), &'s str>), // flag then ident or expr | text
 }
 
 #[derive(Debug, Clone)]
@@ -109,6 +109,62 @@ pub fn parse_from_file<'a>(
     input_file.read_to_string(buffer)?;
 
     Ok(DigifyParse::parse(Rule::program, buffer)?)
+}
+
+fn parse_dimension_str<'s>(pair: Pair<'s, Rule>) -> Option<DimensionStr<'s>> {
+    match pair.as_rule() {
+        Rule::dimension => {
+            let mut pair_iter = pair.into_inner();
+
+            let first_pair = pair_iter.next().unwrap();
+            let mut dimension = match first_pair.as_rule() {
+                Rule::keyword_simplify => DimensionStr::Simplify(Box::new(
+                    parse_dimension_str(pair_iter.next().unwrap()).unwrap(),
+                )),
+                _ => {
+                    // println!("dim: {:?}", a);
+                    parse_dimension_str(first_pair).unwrap()
+                } // panic
+            };
+
+            for mut op_dim in &pair_iter.chunks(2) {
+                let op = pair_into_operator(op_dim.next().unwrap()).unwrap();
+                let dim = parse_dimension_str(op_dim.next().unwrap()).unwrap();
+                dimension = dimension.push(op, dim);
+            }
+            Some(dimension)
+        }
+        Rule::dimension_ident => {
+            let mut pair_iter = pair.into_inner();
+            let mut dimension = DimensionStr::Unite(pair_iter.next().unwrap().as_str());
+
+            if let Some(power) = pair_iter.next() {
+                let power = power.as_str().parse::<i32>().unwrap();
+                dimension = dimension.add_power(power);
+            }
+
+            Some(dimension)
+        }
+        Rule::dimension_groupe => {
+            let mut pair_iter = pair.into_inner();
+            let dimension = parse_dimension_str(pair_iter.next().unwrap()).unwrap();
+
+            Some(dimension)
+        }
+        _ => None,
+    }
+}
+
+fn pair_into_operator<'s>(pair: Pair<'s, Rule>) -> Option<Operator> {
+    if matches!(pair.as_rule(), Rule::operator) {
+        match pair.into_inner().next().unwrap().as_rule() {
+            Rule::mul => Some(Operator::Mul),
+            Rule::div => Some(Operator::Div),
+            _ => unreachable!(),
+        }
+    } else {
+        None
+    }
 }
 
 pub fn into_intructions<'s>(ast: Pairs<'s, Rule>) -> Instructions<'s> {
@@ -203,60 +259,4 @@ pub fn into_intructions_sorted<'s>(ast: Pairs<'s, Rule>) -> Instructions<'s> {
     instructions.sort();
 
     instructions
-}
-
-fn parse_dimension_str<'s>(pair: Pair<'s, Rule>) -> Option<DimensionStr<'s>> {
-    match pair.as_rule() {
-        Rule::dimension => {
-            let mut pair_iter = pair.into_inner();
-
-            let first_pair = pair_iter.next().unwrap();
-            let mut dimension = match first_pair.as_rule() {
-                Rule::keyword_simplify => DimensionStr::Simplify(Box::new(
-                    parse_dimension_str(pair_iter.next().unwrap()).unwrap(),
-                )),
-                _ => {
-                    // println!("dim: {:?}", a);
-                    parse_dimension_str(first_pair).unwrap()
-                } // panic
-            };
-
-            for mut op_dim in &pair_iter.chunks(2) {
-                let op = pair_into_operator(op_dim.next().unwrap()).unwrap();
-                let dim = parse_dimension_str(op_dim.next().unwrap()).unwrap();
-                dimension = dimension.push(op, dim);
-            }
-            Some(dimension)
-        }
-        Rule::dimension_ident => {
-            let mut pair_iter = pair.into_inner();
-            let mut dimension = DimensionStr::Unite(pair_iter.next().unwrap().as_str());
-
-            if let Some(power) = pair_iter.next() {
-                let power = power.as_str().parse::<i32>().unwrap();
-                dimension = dimension.add_power(power);
-            }
-
-            Some(dimension)
-        }
-        Rule::dimension_groupe => {
-            let mut pair_iter = pair.into_inner();
-            let dimension = parse_dimension_str(pair_iter.next().unwrap()).unwrap();
-
-            Some(dimension)
-        }
-        _ => None,
-    }
-}
-
-fn pair_into_operator<'s>(pair: Pair<'s, Rule>) -> Option<Operator> {
-    if matches!(pair.as_rule(), Rule::operator) {
-        match pair.into_inner().next().unwrap().as_rule() {
-            Rule::mul => Some(Operator::Mul),
-            Rule::div => Some(Operator::Div),
-            _ => unreachable!(),
-        }
-    } else {
-        None
-    }
 }
