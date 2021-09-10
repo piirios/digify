@@ -22,7 +22,7 @@ impl<'di, D> Power<'di, D> {
 }
 
 #[derive(Debug)]
-pub enum Concated<T> {
+pub enum Concat<T> {
     Concated(T),
     Spreaded(T)
 }
@@ -70,7 +70,7 @@ impl<'di> Flatten<'di> {
     #[inline]
     pub fn one(power: Power<'di, Unite>) -> Self {
         Self {
-            vec: Concated::Spreaded(vec![power]),
+            vec: Concat::Spreaded(vec![power]),
         }
     }
 
@@ -93,26 +93,26 @@ mod tests {
     #[test]
     fn make_spreaded_already_spread() {
         let v = vec![7, 6, 7, 8];
-        let mut con = Concated::Spreaded(v);
+        let mut con = Concat::Spreaded(v);
 
         con.make_spreaded();
 
         println!("{:?}", con);
 
-        assert!(matches!(con, Concated::Spreaded(_)));
+        assert!(matches!(con, Concat::Spreaded(_)));
         assert_eq!(con.unwrap(), vec![7, 6, 7, 8])
     }
     
     #[test]
     fn make_spreaded_already_concat() {
         let v = vec![7, 6, 8];
-        let mut con = Concated::Concated(v);
+        let mut con = Concat::Concated(v);
 
         con.make_spreaded();
 
         println!("{:?}", con);
 
-        assert!(matches!(con, Concated::Spreaded(_)));
+        assert!(matches!(con, Concat::Spreaded(_)));
         assert_eq!(con.unwrap(), vec![7, 6, 8])
     }
 }
