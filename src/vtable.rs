@@ -2,13 +2,13 @@ use crate::dimension::RawDimension;
 use crate::error::{Digirror, Error};
 use std::collections::HashMap;
 
-pub struct VTable<'di> {
-    table: HashMap<Name, RawDimension<'di>>,
+pub struct VTable {
+    table: HashMap<Name, RawDimension>,
 }
 
-impl<'di> VTable<'di> {
+impl VTable {
     #[inline]
-    pub fn push<E>(&mut self, name: Name, dimension: RawDimension<'di>) -> Result<(), Error<E>> {
+    pub fn push<E>(&mut self, name: Name, dimension: RawDimension) -> Result<(), Error<E>> {
         if !self.table.contains_key(&name) {
             self.table.insert(name, dimension);
             Ok(())
@@ -18,7 +18,7 @@ impl<'di> VTable<'di> {
     }
 }
 
-impl<'di> Default for VTable<'di> {
+impl Default for VTable {
     fn default() -> Self {
         Self {
             table: HashMap::new(),

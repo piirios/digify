@@ -1,13 +1,15 @@
 mod power;
 
+use std::rc::Rc;
+
 use power::*;
 
 pub type Unite = String;
 
-pub enum RawDimension<'di> {
-    Unite(Unite),
-    Power(Power<'di, RawDimension<'di>>),
-    Composit(&'di RawDimension<'di>, Operator, &'di RawDimension<'di>),
+pub enum RawDimension {
+    Unite(Rc<Unite>),
+    Power(Power<RawDimension>),
+    Composit(Rc<RawDimension>, Operator, Rc<RawDimension>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -16,7 +18,7 @@ pub enum Operator {
     Div,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum Sign {
     Plus,
     Minus,
@@ -43,26 +45,40 @@ impl Sign {
     }
 }
 
-pub struct Dimension<'di> {
-    flattened: Vec<RawDimension<'di>>,
-    tree: RawDimension<'di>,
+pub struct Dimension {
+    raw_dimension: RawDimension,
+    flattened: Flatten,
+    hash: u64, // used to compare two dimentions
 }
 
-// impl<'di> From<RawDimension<'di>> for Dimension<'di> {
-//     fn from(dim: RawDimension<'di>) -> Dimension<'di> {
-//         Dimension {
-//             tree: dim,
-//             flattened: dim.flatten_recursive(Sign::Plus, 1),
-//         }
-//     }
-// }
+impl From<RawDimension> for Dimension {
+    fn from(dim: RawDimension) -> Dimension {
+        let flattened = dim.flatten();
+        let hash = flattened.hash();
 
-impl<'di> RawDimension<'di> {
-    // TODO: add a method to concate all SI dimentions into one
-    // see crate::dimension::power::Flatten::concate
-    fn flatten_recursive(&'di self, sign: Sign, power: u32) -> Flatten<'di> {
+        Dimension {
+            raw_dimension: dim,
+            flattened,
+            hash
+        }
+    }
+}
+
+impl PartialEq for Dimension {
+    fn eq(&self, other: &Self) -> bool {
+        self.hash == other.hash
+    }
+}
+
+impl RawDimension {
+    #[inline]
+    fn flatten(&self) -> Flatten {
+        self.flatten_recursive(Sign::Plus, 1)
+    }
+
+    fn flatten_recursive(&self, sign: Sign, power: u32) -> Flatten {
         match self {
-            Self::Unite(unite) => Flatten::one(Power::new(unite, Sign::Plus, power)),
+            Self::Unite(unite) => Flatten::one(Power::new(unite.clone(), Sign::Plus, power)),
             Self::Power(power_) => power_
                 .dimention
                 .flatten_recursive(power_.sign.multiply(sign), power * power_.power),
