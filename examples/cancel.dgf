@@ -1,0 +1,13 @@
+print "==== DEBUT ====";
+
+
+define T "s";
+define D "m";
+
+let d = (D / T) * T;
+
+assert d D;
+print d;
+
+
+print "===== FIN =====";
