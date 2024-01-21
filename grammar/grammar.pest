@@ -1,0 +1,74 @@
+WHITESPACE = _{ " " | NEWLINE }
+COMMENT    = _{ "//" ~ (!NEWLINE ~ ANY)* ~ (NEWLINE | EOI) }
+
+keyword_define = @{ "define" ~ !(ASCII_ALPHA) }
+keyword_let    = @{ "let" ~ !(ASCII_ALPHA) }
+keyword_assert = @{ "assert" ~ !(ASCII_ALPHA) }
+keyword_print  = @{ "print" ~ !(ASCII_ALPHA) }
+// keyword_import = @{ "import" ~ !(ASCII_ALPHA) }
+// keyword_simplify = @{ "simplify" ~ !(ASCII_ALPHA) }
+
+// =============================== PROGRAM ===============================
+program = _{
+    SOI ~ NEWLINE* ~ program_inner ~ NEWLINE* ~ EOI
+}
+program_inner = { (stmt | NEWLINE)* }
+
+stmt = {
+    (
+        keyword_define ~ ident ~ string 
+        | keyword_let ~ ident ~ "=" ~ expr 
+        | keyword_assert ~ expr{2} 
+        | keyword_print ~ element
+    )
+    ~ ";"
+}
+
+ident = @{ (ASCII_ALPHA | "_")+ }
+
+string       = ${ "\"" ~ inner_string ~ "\"" }
+inner_string = @{ (!("\"") ~ ANY)* }
+
+expr = {
+    // | expr ~ op ~ expr
+    // | expr ~ number
+    // | "(" ~ expr ~ ")"
+    // | ident
+
+    | "(" ~ expr ~ ")" ~ term
+    | ident ~ term
+    | "(" ~ expr ~ ")"
+    | ident
+}
+term = _{
+    | op ~ expr ~ term
+    | number ~ term
+    | op ~ expr
+    | number
+}
+op = _{ mul | div }
+mul = { "*" }
+div = { "/" }
+
+/*
+    B1 = "(" ~ expr ~ ")"
+    B2 = ident
+
+    a1 = ~ op ~ expr
+    a2 = ~ number
+
+    A -> B1 A'
+        | B2 A'
+        | B1
+        | B2
+
+    A' -> a1 A'
+        | a2 A'
+        | a1
+        | a2
+
+*/
+
+number = { "-"? ~ ASCII_DIGIT+ }
+
+element = { string | expr }

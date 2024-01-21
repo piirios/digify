@@ -1,0 +1,11 @@
+print "==== DEBUT ====";
+
+
+define T "s";
+define D "m";
+
+let Vit = D / T;
+
+print Vit;
+
+print "===== FIN =====";

@@ -1,35 +1,44 @@
-use crate::vtable::Name;
+use core::fmt;
+use std::error::Error;
 
-//
 #[derive(Debug)]
-pub enum Error<E> {
-    Pest(pest::error::Error<E>),
-    Io(std::io::Error),
-    Digify(Digirror),
+pub struct DigifyError {
+    kind: ErrorKind,
+    span: Span,
 }
 
-impl<E> From<std::io::Error> for Error<E> {
-    #[inline]
-    fn from(err: std::io::Error) -> Self {
-        Self::Io(err)
-    }
-}
-
-impl<E> From<pest::error::Error<E>> for Error<E> {
-    #[inline]
-    fn from(err: pest::error::Error<E>) -> Self {
-        Self::Pest(err)
-    }
-}
-
-impl<E> From<Digirror> for Error<E> {
-    #[inline]
-    fn from(err: Digirror) -> Self {
-        Self::Digify(err)
+impl DigifyError {
+    pub fn new(kind: ErrorKind, span: Span) -> Self {
+        Self { kind, span }
     }
 }
 
 #[derive(Debug)]
-pub enum Digirror {
-    NameAlreadyExist(Name),
+pub enum ErrorKind {
+    AssertFail(String, String),
 }
+
+#[derive(Debug, Default)]
+pub struct Span {
+    line: usize,
+    column: usize,
+    // length: usize,
+}
+
+impl fmt::Display for DigifyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Error at line {}, column {}:\n\t",
+            self.span.line, self.span.column
+        )?;
+
+        match &self.kind {
+            ErrorKind::AssertFail(expected, actual) => {
+                write!(f, "Assertion failed: expected {}, got {}", expected, actual)
+            }
+        }
+    }
+}
+
+impl Error for DigifyError {}

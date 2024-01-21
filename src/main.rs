@@ -1,37 +1,41 @@
-#[macro_use]
-extern crate pest_derive;
+use std::{fs::File, io::Read};
 
-mod dimension;
+use color_eyre::{
+    config::HookBuilder,
+    eyre::{ensure, Context, Result},
+};
+
 mod error;
-mod parse;
-mod utils;
-mod vtable;
+mod interpreter;
+mod parser;
 
-use std::path::Path;
+use parser::*;
 
-use error::Error;
-use parse::{into_intructions_sorted, parse_from_file};
-use vtable::VTable;
+use crate::interpreter::Interpreter;
 
-fn main() {
-    let arg = std::env::args()
-        .nth(1)
-        .unwrap_or("./exemple.dgf".to_owned());
-    let input_path = Path::new(&arg);
+fn main() -> Result<()> {
+    HookBuilder::blank()
+        .add_default_filters()
+        .display_location_section(false)
+        .install()?;
 
-    let mut buffer = String::new();
-    let ast = match parse_from_file(input_path, &mut buffer) {
-        Err(err) => match err {
-            Error::Io(err) => panic!("{:?}", err),
-            Error::Pest(err) => panic!("{:?}", err),
-            _ => panic!(),
-        },
-        Ok(pair) => pair,
-    };
+    let args = std::env::args().skip(1);
+    let (flags, args): (Vec<_>, Vec<_>) = args.partition(|arg| arg.starts_with('-'));
 
-    let mut vtable = VTable::default();
+    ensure!(args.len() == 1, "No input file");
 
-    let i = into_intructions_sorted(ast);
+    let mut input = String::new();
+    let mut file = File::open(&args[0]).wrap_err_with(|| format!("No file named: {}", args[1]))?;
+    file.read_to_string(&mut input)?;
 
-    println!("{:#?}", i);
+    let ast = DigifyParser::parse_to_ast(&input)?;
+
+    let mut interpreter = Interpreter::default();
+
+    if flags.contains(&"-d".to_string()) {
+        dbg!(&ast);
+    }
+    interpreter.eval(ast)?;
+
+    Ok(())
 }
