@@ -108,7 +108,6 @@ impl<'a> Unit<'a> {
                 string.push(' ');
             } else {
                 string.push_str(ident);
-                string.push('^');
                 string.push_str(&power.to_string());
                 string.push(' ');
             }
@@ -121,7 +120,7 @@ impl<'a> Unit<'a> {
                 string.push_str("-1 ");
             } else {
                 string.push_str(ident);
-                string.push_str("^-");
+                string.push('-');
                 string.push_str(&power.to_string());
                 string.push(' ');
             }
@@ -130,7 +129,7 @@ impl<'a> Unit<'a> {
         string
     }
 
-    pub fn print(&self, scopes: &TowerScope<'a>) {
+    pub fn println(&self, scopes: &TowerScope<'a>) {
         println!("{}", self.to_string(scopes));
     }
 

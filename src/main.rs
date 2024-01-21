@@ -1,4 +1,5 @@
-use std::{fs::File, io::Read};
+use std::fs::File;
+use std::io::Read;
 
 use color_eyre::{
     config::HookBuilder,

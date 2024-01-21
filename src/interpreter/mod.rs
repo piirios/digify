@@ -8,7 +8,10 @@ use element::Element;
 use scope::TowerScope;
 use variable::Unit;
 
-use crate::{error::{DigifyError, ErrorKind, Span}, parser::{Element as AstElement, Expr, Stmt}};
+use crate::{
+    error::{DigifyError, ErrorKind, Span},
+    parser::{Element as AstElement, Expr, Stmt},
+};
 
 #[derive(Debug, Default)]
 pub struct Interpreter<'b> {
@@ -23,19 +26,22 @@ impl<'a> Interpreter<'a> {
             Stmt::Assert(unit1, unit2) => {
                 let unit1 = self.eval_expr(unit1)?;
                 let unit2 = self.eval_expr(unit2)?;
-                
+
                 let cmp = unit1.eq(&unit2, &self.scopes);
                 if !cmp {
                     let error = DigifyError::new(
-                    ErrorKind::AssertFail(unit1.to_string(&self.scopes), unit2.to_string(&self.scopes)),
+                        ErrorKind::AssertFail(
+                            unit1.to_string(&self.scopes),
+                            unit2.to_string(&self.scopes),
+                        ),
                         Span::default(),
                     );
 
-                    return Err(error.into())
+                    return Err(error.into());
                 }
                 // ensure!(cmp, "assert fail bettewen {} and {}", expr1, expr2);
             }
-            Stmt::Print(element) => self.eval_element(element)?.print(&self.scopes),
+            Stmt::Print(element) => self.eval_element(element)?.println(&self.scopes),
             Stmt::Block(stmts) => {
                 self.scopes.enter_scope();
                 for stmt in stmts {

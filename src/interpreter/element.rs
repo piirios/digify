@@ -2,16 +2,15 @@ use crate::interpreter::variable::Unit;
 
 use crate::interpreter::scope::TowerScope;
 
-
 pub enum Element<'a> {
     String(&'a str),
-    Expr(Unit<'a>)
+    Expr(Unit<'a>),
 }
 impl<'a> Element<'a> {
-    pub fn print(&self, scopes: &TowerScope<'a>) {
+    pub fn println(&self, scopes: &TowerScope<'a>) {
         match self {
             Self::String(string) => println!("{}", string),
-            Self::Expr(unit) => unit.print(scopes),
+            Self::Expr(unit) => unit.println(scopes),
         }
     }
 }
