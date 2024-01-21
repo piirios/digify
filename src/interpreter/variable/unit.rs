@@ -3,6 +3,8 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ops;
 
+use color_eyre::eyre::Result;
+
 use crate::interpreter::scope::TowerScope;
 use crate::interpreter::variable::Variable;
 use crate::parser::Expr;
@@ -36,14 +38,28 @@ impl<'a> Unit<'a> {
             let top = self
                 .top
                 .iter()
-                .map(|(ident, power)| scopes.get(ident).unwrap().clone().into_unit().power(*power))
+                .map(|(ident, power)| {
+                    scopes
+                        .get(ident)
+                        .unwrap()
+                        .simplify(scopes)
+                        .clone()
+                        .power(*power)
+                })
                 .reduce(|acc, variable| acc * variable)
                 .unwrap_or_default();
 
             let bottom = self
                 .bottom
                 .iter()
-                .map(|(ident, power)| scopes.get(ident).unwrap().clone().into_unit().power(*power))
+                .map(|(ident, power)| {
+                    scopes
+                        .get(ident)
+                        .unwrap()
+                        .simplify(scopes)
+                        .clone()
+                        .power(*power)
+                })
                 .reduce(|acc, variable| acc * variable)
                 .unwrap_or_default();
 
@@ -119,37 +135,66 @@ impl<'a> Unit<'a> {
     }
 }
 
-impl<'a> From<Expr<'a>> for Unit<'a> {
-    fn from(value: Expr<'a>) -> Self {
+impl<'a> Unit<'a> {
+    pub fn from(value: Expr<'a>, scopes: &TowerScope<'a>) -> Result<Self> {
         fn insert_in_frac<'b>(
             top: &mut HashMap<&'b str, u32>,
             bottom: &mut HashMap<&'b str, u32>,
             expr: Expr<'b>,
             power: u32,
-        ) {
+            simplify: bool,
+            scopes: &TowerScope<'b>,
+        ) -> Result<()> {
             match expr {
-                Expr::Ident(ident) => *top.entry(ident).or_default() += power,
+                Expr::Ident(ident) => {
+                    if simplify {
+                        let variable = scopes.get(ident)?.simplify(scopes);
+
+                        for (ident, power) in variable.top() {
+                            *top.entry(ident).or_default() += power;
+                        }
+                        for (ident, power) in variable.bottom() {
+                            *bottom.entry(ident).or_default() += power;
+                        }
+                    } else {
+                        *top.entry(ident).or_default() += power
+                    }
+                }
                 Expr::Mul(expr1, expr2) => {
-                    insert_in_frac(top, bottom, *expr1, power);
-                    insert_in_frac(top, bottom, *expr2, power);
+                    insert_in_frac(top, bottom, *expr1, power, simplify, scopes)?;
+                    insert_in_frac(top, bottom, *expr2, power, simplify, scopes)?;
                 }
                 Expr::Div(expr1, expr2) => {
-                    insert_in_frac(top, bottom, *expr1, power);
-                    insert_in_frac(bottom, top, *expr2, power);
+                    insert_in_frac(top, bottom, *expr1, power, simplify, scopes)?;
+                    insert_in_frac(bottom, top, *expr2, power, simplify, scopes)?;
                 }
                 Expr::Power(expr, number) => match number.cmp(&0) {
-                    Ordering::Less => insert_in_frac(bottom, top, *expr, power * -number as u32),
-                    Ordering::Greater => insert_in_frac(top, bottom, *expr, power * number as u32),
+                    Ordering::Less => insert_in_frac(
+                        bottom,
+                        top,
+                        *expr,
+                        power * -number as u32,
+                        simplify,
+                        scopes,
+                    )?,
+                    Ordering::Greater => {
+                        insert_in_frac(top, bottom, *expr, power * number as u32, simplify, scopes)?
+                    }
                     Ordering::Equal => (),
                 },
+                Expr::Simplify(expr) => {
+                    insert_in_frac(top, bottom, *expr, power, true, scopes)?
+                }
                 Expr::None => (),
             }
+
+            Ok(())
         }
 
         let mut top = HashMap::new();
         let mut bottom = HashMap::new();
 
-        insert_in_frac(&mut top, &mut bottom, value, 1);
+        insert_in_frac(&mut top, &mut bottom, value, 1, false, scopes)?;
         let bottom_idents = bottom.keys().copied().collect::<Vec<_>>();
 
         for ident in bottom_idents {
@@ -176,11 +221,11 @@ impl<'a> From<Expr<'a>> for Unit<'a> {
             }
         }
 
-        Self {
+        Ok(Self {
             top,
             bottom,
             simplify: Box::new(OnceCell::new()),
-        }
+        })
     }
 }
 
@@ -204,6 +249,8 @@ impl<'a> ops::Mul for Unit<'a> {
                     }
                     Ordering::Less => *neg_power -= pos_power,
                 }
+            } else {
+                self.top.insert(ident, pos_power);
             }
             if is_cancel {
                 self.bottom.remove(ident);
@@ -224,6 +271,8 @@ impl<'a> ops::Mul for Unit<'a> {
                     }
                     Ordering::Less => *pos_power -= neg_power,
                 }
+            } else {
+                self.bottom.insert(ident, neg_power);
             }
             if is_cancel {
                 self.top.remove(ident);

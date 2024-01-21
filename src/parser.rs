@@ -22,6 +22,7 @@ pub enum Expr<'a> {
     Mul(Box<Expr<'a>>, Box<Expr<'a>>),
     Div(Box<Expr<'a>>, Box<Expr<'a>>),
     Power(Box<Expr<'a>>, i32),
+    Simplify(Box<Expr<'a>>),
     None,
 }
 
@@ -56,16 +57,16 @@ impl DigifyParser {
                 }
                 Rule::keyword_let => {
                     let ident = inner.next().unwrap().as_str();
-                    let expr = Self::parse_expr(inner.next().unwrap());
+                    let expr = Self::parse_expr(inner.next().unwrap())?;
                     Stmt::Let(ident, expr)
                 }
                 Rule::keyword_assert => {
-                    let expr1 = Self::parse_expr(inner.next().unwrap());
-                    let expr2 = Self::parse_expr(inner.next().unwrap());
+                    let expr1 = Self::parse_expr(inner.next().unwrap())?;
+                    let expr2 = Self::parse_expr(inner.next().unwrap())?;
                     Stmt::Assert(expr1, expr2)
                 }
                 Rule::keyword_print => {
-                    let element = Self::parse_element(inner.next().unwrap());
+                    let element = Self::parse_element(inner.next().unwrap())?;
                     Stmt::Print(element)
                 }
                 _ => bail!("unkown rule in stmt match: {:?}", keyword.as_rule()),
@@ -77,10 +78,9 @@ impl DigifyParser {
         }
     }
 
-    fn parse_expr(pair: Pair<Rule>) -> Expr {
+    fn parse_expr(pair: Pair<Rule>) -> Result<Expr> {
         if pair.as_rule() == Rule::expr {
-
-            pair.into_inner().fold(Expr::None, |acc, pair| {
+            pair.into_inner().try_fold(Expr::None, |acc, pair| {
                 let expr = match pair.as_rule() {
                     Rule::ident => {
                         let expr = Expr::Ident(pair.as_str());
@@ -88,44 +88,69 @@ impl DigifyParser {
                         match acc {
                             Expr::Mul(inner, _) => Expr::Mul(inner, Box::new(expr)),
                             Expr::Div(inner, _) => Expr::Div(inner, Box::new(expr)),
+                            Expr::Simplify(_) => Expr::Simplify(Box::new(expr)),
                             _ => expr,
                         }
                     }
                     Rule::expr => {
-                        let expr = Self::parse_expr(pair);
+                        let expr = Self::parse_expr(pair)?;
 
                         match acc {
                             Expr::Mul(inner, _) => Expr::Mul(inner, Box::new(expr)),
                             Expr::Div(inner, _) => Expr::Div(inner, Box::new(expr)),
+                            Expr::Simplify(_) => Expr::Simplify(Box::new(expr)),
                             _ => expr,
                         }
                     }
                     Rule::mul => Expr::Mul(Box::new(acc), Box::new(Expr::None)),
                     Rule::div => Expr::Div(Box::new(acc), Box::new(Expr::None)),
                     Rule::number => {
-                        Expr::Power(Box::new(acc), pair.as_str().parse::<i32>().unwrap())
+                        Expr::Power(Box::new(acc), pair.as_str().trim().parse::<i32>().unwrap())
+                    }
+                    Rule::percent => {
+                        Expr::Simplify(Box::new(Expr::None))
                     }
                     _ => unreachable!(),
                 };
 
-                expr
+                Ok(expr)
             })
         } else {
-            unreachable!()
+            bail!("Try parsing {:?} as a Expr", pair.as_rule())
         }
     }
 
-    fn parse_element(pair: Pair<Rule>) -> Element {
+    fn parse_element(pair: Pair<Rule>) -> Result<Element> {
         if pair.as_rule() == Rule::element {
             let inner = pair.into_inner().next().unwrap();
 
-            match inner.as_rule() {
-                Rule::expr => Element::Expr(Self::parse_expr(inner)),
+            let element = match inner.as_rule() {
+                Rule::expr => Element::Expr(Self::parse_expr(inner)?),
                 Rule::string => Element::String(inner.into_inner().next().unwrap().as_str()),
                 _ => unreachable!(),
-            }
+            };
+
+            Ok(element)
         } else {
-            unreachable!()
+            bail!("Try parsing {:?} as a Element", pair.as_rule())
         }
     }
+
+    // fn parse_ident(pair: Pair<Rule>) -> Result<Expr> {
+    //     if pair.as_rule() == Rule::ident {
+    //         let mut inner = pair.into_inner();
+    //         let first_token = inner.next().unwrap();
+    //         let ident = if first_token.as_rule() == Rule::percent {
+    //             let ident = inner.next().unwrap().as_str();
+    //             Expr::Ident(true, ident)
+    //         } else {
+    //             let ident = first_token.as_str();
+    //             Expr::Ident(false, ident)
+    //         };
+
+    //         Ok(ident)
+    //     } else {
+    //         bail!("Try parsing {:?} as a Ident", pair.as_rule())
+    //     }
+    // }
 }

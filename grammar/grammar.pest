@@ -6,7 +6,6 @@ keyword_let    = @{ "let" ~ !(ASCII_ALPHA) }
 keyword_assert = @{ "assert" ~ !(ASCII_ALPHA) }
 keyword_print  = @{ "print" ~ !(ASCII_ALPHA) }
 // keyword_import = @{ "import" ~ !(ASCII_ALPHA) }
-// keyword_simplify = @{ "simplify" ~ !(ASCII_ALPHA) }
 
 // =============================== PROGRAM ===============================
 program = _{
@@ -24,7 +23,8 @@ stmt = {
     ~ ";"
 }
 
-ident = @{ (ASCII_ALPHA | "_")+ }
+ident = ${ (ASCII_ALPHA | "_")+ }
+percent = { "%" }
 
 string       = ${ "\"" ~ inner_string ~ "\"" }
 inner_string = @{ (!("\"") ~ ANY)* }
@@ -33,12 +33,15 @@ expr = {
     // | expr ~ op ~ expr
     // | expr ~ number
     // | "(" ~ expr ~ ")"
+    // | percent ~ expr
     // | ident
 
     | "(" ~ expr ~ ")" ~ term
     | ident ~ term
+    | percent ~ expr ~ term
     | "(" ~ expr ~ ")"
     | ident
+    | percent ~ expr
 }
 term = _{
     | op ~ expr ~ term
@@ -53,12 +56,14 @@ div = { "/" }
 /*
     B1 = "(" ~ expr ~ ")"
     B2 = ident
+    B3 = percent ~ expr
 
     a1 = ~ op ~ expr
     a2 = ~ number
 
     A -> B1 A'
         | B2 A'
+        | B3 A'
         | B1
         | B2
 

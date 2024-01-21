@@ -19,7 +19,7 @@ impl<'a> Interpreter<'a> {
     pub fn eval(&mut self, stmt: Stmt<'a>) -> Result<()> {
         match stmt {
             Stmt::Definition(ident, symbole) => self.scopes.define(ident, symbole)?,
-            Stmt::Let(ident, expr) => self.scopes.insert(ident, expr)?,
+            Stmt::Let(ident, expr) => self.scopes.insert(ident, self.eval_expr(expr)?)?,
             Stmt::Assert(unit1, unit2) => {
                 let unit1 = self.eval_expr(unit1)?;
                 let unit2 = self.eval_expr(unit2)?;
@@ -49,7 +49,7 @@ impl<'a> Interpreter<'a> {
     }
 
     fn eval_expr(&self, expr: Expr<'a>) -> Result<Unit<'a>> {
-        let unit = Unit::from(expr);
+        let unit = Unit::from(expr, &self.scopes)?;
 
         for ident in unit.top().keys() {
             ensure!(self.scopes.contains(ident))

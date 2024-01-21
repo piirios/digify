@@ -11,11 +11,17 @@ assert Vit nVit;
 
 let Acc = Vit / T;
 
+assert Acc * T Vit;
 
 print T;
 print Vit;
 print Acc;
 print Acc * T;
+
+print %T;
+print %Vit;
+print %Acc;
+print %(Acc * T);
 
 print "====== FIN ======";
 

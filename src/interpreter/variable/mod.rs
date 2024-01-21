@@ -4,6 +4,8 @@ mod unit;
 pub use axiom::Axiom;
 pub use unit::Unit;
 
+use super::scope::TowerScope;
+
 #[derive(Debug, Clone)]
 pub enum Variable<'a> {
     Unit(Unit<'a>),
@@ -11,10 +13,17 @@ pub enum Variable<'a> {
 }
 
 impl<'a> Variable<'a> {
-    fn into_unit(self: Variable<'a>) -> Unit<'a> {
+    // fn as_unit(&self) -> &Unit<'a> {
+    //     match self {
+    //         Self::Unit(unit) => unit,
+    //         Self::Axiom(axiom) => axiom.as_unit(),
+    //     }
+    // }
+
+    fn simplify(&self, scopes: &TowerScope<'a>) -> &Unit<'a> {
         match self {
-            Self::Unit(unit) => unit,
-            Self::Axiom(axiom) => axiom.into_unit(),
+            Self::Unit(unit) => unit.simplify(scopes),
+            Self::Axiom(axiom) => axiom.as_unit(),
         }
     }
 

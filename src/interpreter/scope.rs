@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use color_eyre::eyre::{bail, eyre, OptionExt, Result};
 
 use crate::interpreter::variable::{Unit, Variable};
-use crate::parser::*;
 
 use super::variable::Axiom;
 
@@ -22,8 +21,8 @@ impl<'a> TowerScope<'a> {
         self.scopes.last_mut().unwrap().define(ident, symbole)
     }
 
-    pub fn insert(&mut self, ident: &'a str, expr: Expr<'a>) -> Result<()> {
-        self.scopes.last_mut().unwrap().insert(ident, expr)
+    pub fn insert(&mut self, ident: &'a str, unit: Unit<'a>) -> Result<()> {
+        self.scopes.last_mut().unwrap().insert(ident, unit)
     }
 
     pub fn contains(&self, ident: &'a str) -> bool {
@@ -68,13 +67,13 @@ impl<'a> Scope<'a> {
         Ok(())
     }
 
-    fn insert(&mut self, ident: &'a str, expr: Expr<'a>) -> Result<()> {
+    fn insert(&mut self, ident: &'a str, unit: Unit<'a>) -> Result<()> {
         if self.variables.contains_key(ident) {
+            // TODO: Use digify error
             bail!("Variable `{}` is already declared", ident)
         }
 
-        let raw_variable = Unit::from(expr);
-        let variable = Variable::Unit(raw_variable);
+        let variable = Variable::Unit(unit);
 
         self.variables.insert(ident, variable);
         Ok(())
