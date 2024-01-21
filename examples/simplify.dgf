@@ -6,19 +6,25 @@ define D "m";
 
 let Vit = D / T;
 
-
-let Acc = %Vit / T;
-let nAcc = T-1 * %Vit;
+let Acc = Vit / T;
+let nAcc = %Vit / T;
+let mAcc = T-1 * %Vit;
 
 assert Acc nAcc;
+assert nAcc mAcc;
 
 print T;
 print Vit;
 print Acc;
+print nAcc;
+print mAcc;
 
 
 print %T;
 print %Vit;
 print %Acc;
+print %nAcc;
+print %Acc;
+
 
 print "===== FIN =====";

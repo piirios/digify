@@ -107,9 +107,7 @@ impl DigifyParser {
                     Rule::number => {
                         Expr::Power(Box::new(acc), pair.as_str().trim().parse::<i32>().unwrap())
                     }
-                    Rule::percent => {
-                        Expr::Simplify(Box::new(Expr::None))
-                    }
+                    Rule::percent => Expr::Simplify(Box::new(Expr::None)),
                     _ => unreachable!(),
                 };
 

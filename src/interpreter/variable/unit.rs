@@ -133,9 +133,7 @@ impl<'a> Unit<'a> {
     pub fn print(&self, scopes: &TowerScope<'a>) {
         println!("{}", self.to_string(scopes));
     }
-}
 
-impl<'a> Unit<'a> {
     pub fn from(value: Expr<'a>, scopes: &TowerScope<'a>) -> Result<Self> {
         fn insert_in_frac<'b>(
             top: &mut HashMap<&'b str, u32>,
@@ -182,9 +180,7 @@ impl<'a> Unit<'a> {
                     }
                     Ordering::Equal => (),
                 },
-                Expr::Simplify(expr) => {
-                    insert_in_frac(top, bottom, *expr, power, true, scopes)?
-                }
+                Expr::Simplify(expr) => insert_in_frac(top, bottom, *expr, power, true, scopes)?,
                 Expr::None => (),
             }
 
@@ -250,7 +246,7 @@ impl<'a> ops::Mul for Unit<'a> {
                     Ordering::Less => *neg_power -= pos_power,
                 }
             } else {
-                self.top.insert(ident, pos_power);
+                *self.top.entry(ident).or_default() += pos_power;
             }
             if is_cancel {
                 self.bottom.remove(ident);
@@ -272,7 +268,7 @@ impl<'a> ops::Mul for Unit<'a> {
                     Ordering::Less => *pos_power -= neg_power,
                 }
             } else {
-                self.bottom.insert(ident, neg_power);
+                *self.bottom.entry(ident).or_default() += neg_power;
             }
             if is_cancel {
                 self.top.remove(ident);
@@ -288,12 +284,12 @@ impl<'a> ops::Div for Unit<'a> {
 
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn div(self, rhs: Self) -> Self::Output {
-        let inveres_rhs = Self {
+        let inverse_rhs = Self {
             top: rhs.bottom,
             bottom: rhs.top,
             simplify: rhs.simplify,
         };
 
-        self * inveres_rhs
+        self * inverse_rhs
     }
 }

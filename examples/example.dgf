@@ -23,5 +23,22 @@ print %Vit;
 print %Acc;
 print %(Acc * T);
 
+
+print "-----------------";
+
+print Vit * T;
+print %(Vit * T);
+print Vit / T;
+print %(Vit / T);
+
+print "-----------------";
+
+let nT = T;
+let mT = nT;
+let pT = mT;
+
+print T / T;
+print pT;
+
 print "====== FIN ======";
 
