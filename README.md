@@ -26,15 +26,15 @@ Une expression.
 
 Afficher une unitée.
 ```
-print <expr>
+print <expr>;
 ```
 
 Afficher un message.
 ```
-print <string>
+print <string>;
 ```
 
 Tester une egalitée.
 ```
-assert <expr> <expr>
+assert <expr> <expr>;
 ```
