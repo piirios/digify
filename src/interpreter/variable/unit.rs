@@ -3,12 +3,13 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ops;
 
-use color_eyre::eyre::Result;
+// use color_eyre::eyre::Result;
 
-use crate::interpreter::scope::TowerScope;
-use crate::interpreter::variable::Variable;
+use crate::interpreter::{scope::TowerScope, variable::Variable};
 use crate::parser::Expr;
+use crate::error::Result;
 
+// Invariant: top and bottom &str are always existing in the scopes
 #[derive(Debug, Clone, Default)]
 pub struct Unit<'a> {
     top: HashMap<&'a str, u32>,
@@ -40,8 +41,9 @@ impl<'a> Unit<'a> {
                 .iter()
                 .map(|(ident, power)| {
                     scopes
-                        .get(ident)
+                        .get_existing(ident)
                         .unwrap()
+                        .item
                         .simplify(scopes)
                         .clone()
                         .power(*power)
@@ -54,8 +56,9 @@ impl<'a> Unit<'a> {
                 .iter()
                 .map(|(ident, power)| {
                     scopes
-                        .get(ident)
+                        .get_existing(ident)
                         .unwrap()
+                        .item
                         .simplify(scopes)
                         .clone()
                         .power(*power)
@@ -91,7 +94,7 @@ impl<'a> Unit<'a> {
         }
 
         if pos_ident.len() == 1 && neg_ident.is_empty() {
-            let variable = scopes.get(pos_ident[0]).unwrap();
+            let variable = scopes.get_existing(pos_ident[0]).unwrap().item();
 
             match variable {
                 Variable::Axiom(axiom) => return axiom.symbole().to_string(),
@@ -133,7 +136,7 @@ impl<'a> Unit<'a> {
         println!("{}", self.to_string(scopes));
     }
 
-    pub fn from(value: Expr<'a>, scopes: &TowerScope<'a>) -> Result<Self> {
+    pub fn from(value: Expr<'a>, scopes: &TowerScope<'a>) -> Result<'a, Self> {
         fn insert_in_frac<'b>(
             top: &mut HashMap<&'b str, u32>,
             bottom: &mut HashMap<&'b str, u32>,
@@ -141,11 +144,11 @@ impl<'a> Unit<'a> {
             power: u32,
             simplify: bool,
             scopes: &TowerScope<'b>,
-        ) -> Result<()> {
+        ) -> Result<'b, ()> {
             match expr {
                 Expr::Ident(ident) => {
                     if simplify {
-                        let variable = scopes.get(ident)?.simplify(scopes);
+                        let variable = scopes.get(ident)?.item.simplify(scopes);
 
                         for (ident, power) in variable.top() {
                             *top.entry(ident).or_default() += power;
@@ -154,32 +157,39 @@ impl<'a> Unit<'a> {
                             *bottom.entry(ident).or_default() += power;
                         }
                     } else {
-                        *top.entry(ident).or_default() += power
+                        *top.entry(ident.as_str()).or_default() += power
                     }
                 }
                 Expr::Mul(expr1, expr2) => {
-                    insert_in_frac(top, bottom, *expr1, power, simplify, scopes)?;
-                    insert_in_frac(top, bottom, *expr2, power, simplify, scopes)?;
+                    insert_in_frac(top, bottom, expr1.item, power, simplify, scopes)?;
+                    insert_in_frac(top, bottom, expr2.item, power, simplify, scopes)?;
                 }
                 Expr::Div(expr1, expr2) => {
-                    insert_in_frac(top, bottom, *expr1, power, simplify, scopes)?;
-                    insert_in_frac(bottom, top, *expr2, power, simplify, scopes)?;
+                    insert_in_frac(top, bottom, expr1.item, power, simplify, scopes)?;
+                    insert_in_frac(bottom, top, expr2.item, power, simplify, scopes)?;
                 }
                 Expr::Power(expr, number) => match number.cmp(&0) {
                     Ordering::Less => insert_in_frac(
                         bottom,
                         top,
-                        *expr,
+                        expr.item,
                         power * -number as u32,
                         simplify,
                         scopes,
                     )?,
-                    Ordering::Greater => {
-                        insert_in_frac(top, bottom, *expr, power * number as u32, simplify, scopes)?
-                    }
+                    Ordering::Greater => insert_in_frac(
+                        top,
+                        bottom,
+                        expr.item,
+                        power * number as u32,
+                        simplify,
+                        scopes,
+                    )?,
                     Ordering::Equal => (),
                 },
-                Expr::Simplify(expr) => insert_in_frac(top, bottom, *expr, power, true, scopes)?,
+                Expr::Simplify(expr) => {
+                    insert_in_frac(top, bottom, expr.item, power, true, scopes)?
+                }
                 Expr::None => (),
             }
 

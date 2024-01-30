@@ -1,0 +1,5 @@
+print "==== DEBUT ====";
+
+let temps = T;
+
+print "===== FIN =====";

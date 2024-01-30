@@ -4,7 +4,9 @@ mod unit;
 pub use axiom::Axiom;
 pub use unit::Unit;
 
-use super::scope::TowerScope;
+use crate::{interpreter::scope::TowerScope, parser::Item};
+
+pub type IVariable<'a> = Item<'a, Variable<'a>>;
 
 #[derive(Debug, Clone)]
 pub enum Variable<'a> {

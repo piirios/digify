@@ -1,0 +1,6 @@
+print "==== DEBUT ====";
+
+define T "s";
+define T "m";
+
+print "===== FIN =====";

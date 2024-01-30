@@ -1,5 +1,3 @@
-use color_eyre::eyre::{ensure, Result};
-
 mod element;
 mod scope;
 mod variable;
@@ -8,20 +6,19 @@ use element::Element;
 use scope::TowerScope;
 use variable::Unit;
 
-use crate::{
-    error::{DigifyError, ErrorKind, Span},
-    parser::{Element as AstElement, Expr, Stmt},
-};
+use crate::error::{DigifyError, ErrorKind, Result};
+use crate::parser::Element as AstElement;
+use crate::parser::{IExpr, IStmt, Stmt};
 
 #[derive(Debug, Default)]
-pub struct Interpreter<'b> {
-    scopes: TowerScope<'b>,
+pub struct Interpreter<'a> {
+    scopes: TowerScope<'a>,
 }
 
 impl<'a> Interpreter<'a> {
-    pub fn eval(&mut self, stmt: Stmt<'a>) -> Result<()> {
-        match stmt {
-            Stmt::Definition(ident, symbole) => self.scopes.define(ident, symbole)?,
+    pub fn eval(&mut self, stmt: IStmt<'a>) -> Result<'a, ()> {
+        match stmt.item {
+            Stmt::Definition(ident, symbole) => self.scopes.define(ident, symbole.item)?,
             Stmt::Let(ident, expr) => self.scopes.insert(ident, self.eval_expr(expr)?)?,
             Stmt::Assert(unit1, unit2) => {
                 let unit1 = self.eval_expr(unit1)?;
@@ -29,17 +26,14 @@ impl<'a> Interpreter<'a> {
 
                 let cmp = unit1.eq(&unit2, &self.scopes);
                 if !cmp {
-                    let error = DigifyError::new(
-                        ErrorKind::AssertFail(
-                            unit1.to_string(&self.scopes),
-                            unit2.to_string(&self.scopes),
-                        ),
-                        Span::default(),
+                    let kind = ErrorKind::AssertFail(
+                        unit1.to_string(&self.scopes),
+                        unit2.to_string(&self.scopes),
                     );
+                    let span = stmt.span.clone();
 
-                    return Err(error.into());
+                    return Err(DigifyError::new(kind, span));
                 }
-                // ensure!(cmp, "assert fail bettewen {} and {}", expr1, expr2);
             }
             Stmt::Print(element) => self.eval_element(element)?.println(&self.scopes),
             Stmt::Block(stmts) => {
@@ -54,24 +48,26 @@ impl<'a> Interpreter<'a> {
         Ok(())
     }
 
-    fn eval_expr(&self, expr: Expr<'a>) -> Result<Unit<'a>> {
-        let unit = Unit::from(expr, &self.scopes)?;
+    fn eval_expr(&self, expr: IExpr<'a>) -> Result<'a, Unit<'a>> {
+        let unit = Unit::from(expr.item, &self.scopes)?;
 
-        for ident in unit.top().keys() {
-            ensure!(self.scopes.contains(ident))
-        }
+        let idents = unit.top().keys().chain(unit.bottom().keys());
 
-        for ident in unit.bottom().keys() {
-            ensure!(self.scopes.contains(ident))
+        for ident in idents {
+            if !self.scopes.contains(ident) {
+                let king = ErrorKind::VariableNotDeclared((*ident).to_owned());
+                let span = expr.span;
+                return Err(DigifyError::new(king, span));
+            }
         }
 
         Ok(unit)
     }
 
-    fn eval_element(&self, element: AstElement<'a>) -> Result<Element<'a>> {
+    fn eval_element(&self, element: AstElement<'a>) -> Result<'a, Element<'a>> {
         let element = match element {
             AstElement::Expr(expr) => Element::Expr(self.eval_expr(expr)?),
-            AstElement::String(string) => Element::String(string),
+            AstElement::String(string) => Element::String(string.item),
         };
 
         Ok(element)

@@ -10,7 +10,7 @@ mod error;
 mod interpreter;
 mod parser;
 
-use parser::*;
+use parser::DigifyParser;
 
 use crate::interpreter::Interpreter;
 
@@ -29,7 +29,9 @@ fn main() -> Result<()> {
     let mut file = File::open(&args[0]).wrap_err_with(|| format!("No file named: {}", args[1]))?;
     file.read_to_string(&mut input)?;
 
-    let ast = DigifyParser::parse_to_ast(&input)?;
+    let input: &'static str = input.leak();
+
+    let ast = DigifyParser::parse_to_ast(input)?;
 
     let mut interpreter = Interpreter::default();
 

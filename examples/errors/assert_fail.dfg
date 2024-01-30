@@ -1,0 +1,10 @@
+print "==== DEBUT ====";
+
+define T "s";
+
+let time = T;
+let time_square = T * T;
+
+assert time time_square;
+
+print "===== FIN =====";
